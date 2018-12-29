@@ -1,0 +1,201 @@
+import x10.io.Console;
+import x10.io.FileReader;
+import x10.io.File;
+import x10.lang.Long;
+import x10.lang.Math;
+public class lcm1{
+	static class TRSACT{
+		public var item_order:Rail[Long];
+		public var item_perm:Rail[Long];
+		public var trsact:Rail[Rail[Long]];
+		public var org_frq:Rail[Long];
+		public var trsact_num:Long,item_max:Long,eles:Long;
+		public var occ:Rail[Rail[Long]],occt:Rail[Long];
+		public var frq:Rail[Long];
+		public var itemset:Rail[Long],itemset_siz:Long;
+		public var jump:Rail[Long],jump_siz:Long;
+		public var sigma:Long;
+		public def qsort_cmp_frq(var a:Long,var b:Long):Int{
+			if (org_frq(a) > org_frq(b)) return x10.lang.Int.operator_as(-1);
+			else if (org_frq(a)<org_frq(b))
+				return x10.lang.Int.operator_as(1);
+			else return x10.lang.Int.operator_as(0);
+		}
+		public def qsort_cmp_idx(var a:Long,var b:Long):Int
+		{
+			if(item_order(a)<item_order(b)) return x10.lang.Int.operator_as(-1);
+			else if (item_order(a)>item_order(b))
+				return x10.lang.Int.operator_as(1);
+			else return x10.lang.Int.operator_as(0);
+		}
+		public def qsort_cmp__idx(var a:Long,var b:Long):Int{
+			if(item_order(a)>item_order(b)) return x10.lang.Int.operator_as(-1);
+			else if (item_order(a)<item_order(b))
+				return x10.lang.Int.operator_as(1);
+			else return x10.lang.Int.operator_as(0);
+		}
+		public def readFromFile(fileName:String){
+			Console.OUT.println("READFROMFILE");
+			var file:File = new File(fileName);
+			this.trsact_num = 0;
+			var temp:Long =0;
+			for(i in file.lines())
+			{
+				this.trsact_num++;
+			}
+			this.trsact = new Rail[Rail[Long]](this.trsact_num);
+			for(i in file.lines())
+			{
+				var t:Rail[String] = i.split(" ");
+				trsact(temp) = new Rail[Long](t.size+1);
+				for(var j:Long =0;j<t.size;j++){
+					trsact(temp)(j) = x10.lang.Long.parseLong(t(j));
+					item_max = x10.lang.Math.max(item_max,trsact(temp)(j));
+				}
+				temp++;
+			}
+			
+			item_max++;
+	//		Console.OUT.println("ITEM_MAX = "+item_max.toString());
+			org_frq = new Rail[Long](item_max);
+
+			for(var i:Long=0;i<trsact_num;i++)
+			{
+				for(var j:Long=0;j<trsact(i).size-1;j++){
+	//				Console.OUT.println(j);	
+					org_frq(trsact(i)(j))++;
+				}
+			}
+	//		Console.OUT.println("ITEM_MAX = "+item_max.toString());
+			
+			item_order = new Rail[Long](item_max);
+			item_perm = new Rail[long](item_max,(i:Long)=>i);
+			x10.util.RailUtils.sort(item_perm,(i:Long,j:Long)=>qsort_cmp_frq(i,j));
+			for(temp =0;temp<item_max;temp++){
+				item_order(item_perm(temp)) = temp;
+			}
+		//	Console.OUT.println(item_order);
+			for(var i:Long=0;i<trsact_num;i++)
+			{
+		//		Console.OUT.println(i);
+				trsact(i)(trsact(i).size-1) = item_max;
+		//		Console.OUT.println(i);
+				x10.util.RailUtils.qsort(trsact(i),0,trsact(i).size-2,(k:Long,j:Long)=>qsort_cmp_idx(k,j));
+			}
+	//		Console.OUT.println("ITEM_MAX = "+item_max.toString());
+			for(var i:Long=0;i<trsact_num;i++)
+			{
+				for(var j:Long=0;j<trsact(i).size;j++)
+					Console.OUT.printf("%d ",trsact(i)(j));
+				Console.OUT.println();
+			}
+			
+		}
+		public def occ_deliv(var item:Long):void
+		{
+			var t:Long,i:Long,j:Long,tId:Long;
+		//	Console.OUT.printf("OCC_DEL -- (%d,%d) ",item,occt(item));
+			for(t =0 ;t<occt(item);t++)
+			{
+		//		Console.OUT.println("IN");
+			//	Console.OUT.printf(" %d",t);
+				tId = occ(item)(t);
+		//		Console.OUT.println("TID = "+tId.toString());
+			//	Console.OUT.println(trsact(tId)(0).toString()+" "+(0).toString());
+				for(j=0;(i=trsact(tId)(j))!=item;j++)
+				{
+		//			Console.OUT.println(j.toString()+" "+i.toString());
+					if(occt(i)==0) jump(jump_siz++) = i;
+		//			Console.OUT.println("ST1");
+		//			Console.OUT.println(occ(i).size.toString());
+					occ(i)(occt(i)++) = tId;
+		//			Console.OUT.println("ST2");
+				} 
+		//		Console.OUT.println("YO!");
+			}
+		}
+		public def output_itemset(var freq:Long)
+		{
+			var i:Long;
+			for(i=0;i<itemset_siz;i++) Console.OUT.printf("%d ",itemset(i));
+			Console.OUT.printf("(%d)\n",freq);
+		}
+		public def LCM(var item:Long)
+		{
+			var i:Long,jt:Long,flag:Long;
+			i=0;
+			jt = jump_siz;
+			flag=0;
+			output_itemset(occt(item));
+			occ_deliv(item);
+			// for(i=0;i<jump_siz;i++)
+			// 	Console.OUT.printf("%d ",jump(i));
+			// Console.OUT.println();
+			x10.util.RailUtils.qsort(jump,jt,jump_siz-1,(i:Long,j:Long)=>qsort_cmp__idx(i,j));
+			// for(i=0;i<jump_siz;i++)
+			// 	Console.OUT.printf("%d ",jump(i));
+			// Console.OUT.println();
+			while(jump_siz>jt)
+			{
+				i = jump(--jump_siz);
+				if(occt(i)>=sigma){
+					itemset(itemset_siz++) = i;
+					LCM(i);
+					itemset_siz--;
+				}
+				
+				occt(i)=0;
+			}
+			
+		}
+		public def doWork(fileName:String,sigma:Long)
+		{
+			this.sigma = sigma;
+			readFromFile(fileName);
+			itemset = new Rail[Long](item_max);
+			itemset_siz=0;
+			occ = new Rail[Rail[Long]](item_max+1);
+			occt = new Rail[Long](item_max+1);
+			// Console.OUT.println("ITEM_MAX = "+item_max.toString());
+			for(var i:Long =0;i<item_max;i++)
+			{
+				occ(i) = new Rail[Long](org_frq(i)+1);
+			//	Console.OUT.println(i.toString()+" "+occ(i).size.toString());
+			}
+			occ(item_max) = new Rail[Long](trsact_num);
+			for(var i:Long=0;i<trsact_num;i++) 
+				occ(item_max)(i) = i;
+			occt(item_max)=trsact_num;
+			jump = new Rail[Long](item_max);
+			jump_siz=0;
+			LCM(item_max);
+		}
+	}
+	public static def main(args:Rail[String]):void{
+		Console.OUT.println(args(0));
+		Console.OUT.println("MAIN");
+		var a:TRSACT;
+		a  = new TRSACT();
+		var s:String = args(0);
+		a.doWork(s,2);
+	// 	var file:File = new File("input.txt");
+	// 	var NumLines:Long=0;
+	// 	var temp:Long=0;
+	// 	for(i in file.lines())
+	// 	{
+	// 		NumLines++;
+	// 	}
+	// 	var arr:Rail[String] = new Rail[String](NumLines);
+	// 	for(line in file.lines())
+	// 	{
+	// 		Console.OUT.println(line);
+	// 		arr(temp) = line;
+	// 		temp = temp+1;
+	// 	}
+	// 	for(line in arr)
+	// 	{
+	// 		Console.OUT.println(line);
+	// 	}
+	 }
+
+}
