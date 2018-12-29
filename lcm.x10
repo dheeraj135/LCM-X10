@@ -3,6 +3,8 @@ import x10.io.FileReader;
 import x10.io.File;
 import x10.lang.Long;
 import x10.lang.Math;
+import x10.array.DistArray_Unique;
+import x10.lang.Place;
 public class lcm{
 	static class TRSACT{
 		public var item_order:Rail[Long];
