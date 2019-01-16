@@ -95,6 +95,82 @@ public class lcmP{
 			}
 		  }
 		}
+		public def reset_occ_deliv(var pl:Long,var item:Long):void
+		{
+			;
+		}
+		public def occ_deliv(val pl:Long,val item:Long):void
+		{
+			val trscRef = at(Place(0))
+			{
+				return GlobalRail(trsact);
+			};
+			at(Place(pl))
+			{
+				var t:Long,i:Long,j:Long;
+				for(t=0;t<occt(pl)(item);t++)
+				{
+					val tId = occ(pl)(item)(t);
+					for(j=0;;j++)
+					{
+						 val temp= j;
+						i=at(trscRef.home){
+							return trscRef()(tId)(temp);
+						};
+						if(i==item) break;
+						if(occt(pl)(i)==0) jump(pl)(jump_siz(pl)++) = i;
+						occ(pl)(i)(occt(pl)(i)++) = tId;
+					}
+				}
+			}
+		}
+		public def output_itemset(val pl:Long,val freq:Long)
+		{
+			at(Place(pl))
+			{
+				var i:Long;
+				for(i=0;i<itemset_siz(pl);i++) Console.OUT.printf("%d ",itemset(i));
+				Console.OUT.printf("(%d)\n",freq);
+			}
+		}
+		public def LCM(val pl:Long,val item:Long)
+		{
+			at(Place(pl))
+			{
+				var i:Long,jt:Long,flag:Long;
+				i=0;
+				jt= jump_siz(pl);
+				flag =0;
+				output_itemset(pl,occt(pl)(item));
+				occ_deliv(pl,item);
+				x10.util.RailUtils.qsort(jump(pl),jt,jump_siz(pl)-1,(i:Long,j:Long)=>qsort_cmp__idx(i,j));
+				while(jump_siz(pl)>jt)
+				{
+					i = jump(pl)(--jump_siz(pl));
+					if(occt(pl)(i)>=sigma)
+					{
+						itemset(pl)(itemset_siz(pl)++) = i;
+						LCM(pl,i);
+						itemset_siz(pl)--;
+					}
+					occt(pl)(i)=0;
+				}
+			}
+		}
+		public def doWork(fileName:String,sigma:Long)
+		{
+			this.sigma = sigma;
+			readFromFile(fileName);
+			
+			val maxI = at(Place(0)){
+				return item_max;
+			};
+			for(var i:Long=0;i<Place.numPlaces();i++)
+			{
+				itemset(i) = new Rail[Long](maxI);
+				itemset_siz(i)=0;
+			}
+		}
 	}
 	public static def main(args:Rail[String]):void
 	{
